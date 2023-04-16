@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 from oura.events import EventData
 from oura.daily_stats import DailyData
+from helpers import save_recent_data
 
 START_DATE = '2023-04-09'
 END_DATE = '2023-04-12'
@@ -20,8 +21,9 @@ if __name__ == "__main__":
     load_dotenv()
     events = pull_events()
     print(events)
-    daily_stats = pull_daily_stats()
-    print(daily_stats.iloc[0])
+    save_recent_data('events', events, START_DATE)
+    # daily_stats = pull_daily_stats()
+    # print(daily_stats.iloc[0])
 
 
 
