@@ -55,31 +55,31 @@ class SleepHRV(BaseModel):
 
 class SleepReadiness(BaseModel): 
     contributors: DailyReadinessContributors 
-    score: int 
-    temperature_deviation: float 
-    temperature_trend_deviation: Optional[float]
+    score: Optional[int] = None
+    temperature_deviation: Optional[float] = None 
+    temperature_trend_deviation: Optional[float] = None
 
 class Sleep(BaseModel): 
     id: str 
     average_breath: float 
     average_heart_rate: float 
-    average_hrv: float 
+    average_hrv: Optional[float]  
     awake_time: int 
     bedtime_end: datetime 
     bedtime_start: datetime 
     day: date 
     deep_sleep_duration: int 
     efficiency: int 
-    heart_rate: SleepHeartRate 
+    heart_rate: Optional[SleepHeartRate] 
     timestamp: Optional[datetime] = None 
-    hrv: SleepHRV 
+    hrv: Optional[SleepHRV] 
     latency: int 
     light_sleep_duration: int 
     low_battery_alert: bool 
-    lowest_heart_rate: int 
+    lowest_heart_rate: Optional[int] 
     movement_30_sec: str 
     period: int 
-    readiness: SleepReadiness 
+    readiness: Optional[SleepReadiness]
     readiness_score_delta: Optional[float] = 0 
     rem_sleep_duration: int 
     restless_periods: int 

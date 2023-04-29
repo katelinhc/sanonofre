@@ -1,4 +1,5 @@
 import json
+import logging
 import pandas as pd
 from datetime import timedelta
 from typing import List, Union
@@ -8,6 +9,7 @@ from models.oura_models import Heartrate, Sleep, Tag
 
 DATA_MODELS = dict(heartrate=Heartrate, tag=Tag, sleep=Sleep)
 EVENT_TYPES = ['heart_rate', 'hrv']
+INDICATOR_TAG = ['tag_sleep_noisy']
 
 class EventData: 
     def __init__(self, start_date, end_date): 
@@ -15,8 +17,12 @@ class EventData:
         self.end_date = end_date
 
     def get_combined_events(self) -> pd.DataFrame: 
+        logging.info('Collecting events...')
+        logging.info('collecting heartrate')
         hr_events = pd.DataFrame(self._collect_heartrate_events())
+        logging.info('collecting sleep')
         sleep_events = pd.DataFrame(self._collect_sleep_events()) 
+        logging.info('collecting tags')
         tag_events = pd.DataFrame(self._collect_tag_events()) 
         return pd.concat([hr_events, sleep_events, tag_events]).sort_values(['timestamp'])
     
@@ -30,16 +36,17 @@ class EventData:
         for s in sleep_data:
             start_time = s.dict()['bedtime_start']
             for event_type in EVENT_TYPES: 
-                interval = s.dict()[event_type]['interval']
-                interval_data = s.dict()[event_type]['items']
-                sleep_events.extend(
-                    dict(
-                        timestamp=start_time + timedelta(seconds=i * interval),
-                        data_type=event_type,
-                        value=interval_data[i],
+                if s.dict()[event_type]:
+                    interval = s.dict()[event_type]['interval']
+                    interval_data = s.dict()[event_type]['items']
+                    sleep_events.extend(
+                        dict(
+                            timestamp=start_time + timedelta(seconds=i * interval),
+                            data_type=event_type,
+                            value=interval_data[i],
+                        )
+                        for i in range(len(interval_data))
                     )
-                    for i in range(len(interval_data))
-                )
         return sleep_events
 
     def _collect_heartrate_events(self) -> List[dict]: 
@@ -59,7 +66,7 @@ class EventData:
             dict(
                 timestamp=event.dict()['timestamp'],
                 data_type='tag',
-                value=event.dict()['tags'],
+                value=1 if event.dict()['tags']==INDICATOR_TAG else 0,
             )
             for event in raw_data
         ]
