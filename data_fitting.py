@@ -14,24 +14,33 @@ class DataFitting:
     def __init__(self, df: pd.DataFrame, data_type: str) -> None:
         self.df = df
         self.data_type = data_type
-        self.days = 10
-        
+        self.initial_guess_days = [5,7,14,30,50,60]
         
     def fit_data(self):
+        for d in self.initial_guess_days:
+            self.fit_single_period(d)
+        
+    def fit_single_period(self, days):
         self.df['timestamp'] = pd.to_datetime(self.df['timestamp'], utc=True)
         min_time =self. df.timestamp.apply(date2num).min()
         x = [date2num(t) for t in self.df.timestamp]
         p, _ = curve_fit(
             self.sine, x, self.df.value, 
-            p0 = [20, 2*np.pi / self.days, 0, 50, min_time]
+            p0 = [20, 2*np.pi / days, 0, 50, min_time]
         )
         T = (2*np.pi / p[1])
         print(f'The best-fit sine function has a period of {T} days.')
+        self.fit_stats(x,p)
         
         self.plot_fit(x, p, T)
         
+    def fit_stats(self, x, p):
+        residuals = self.df.value- self.sine(x, *p)
+        ss_res = np.sum(residuals**2)
+        ss_tot = np.sum((self.df.value-np.mean(self.df.value))**2)
+        r_squared = 1 - (ss_res / ss_tot)
+        print(f'rsq={round(r_squared,2)}')
         
-
     def sine(self, x, a, b, c, d, min_time):    
         x_ = x - min_time 
         return a * np.sin(b * (x_ - c)) + d
@@ -60,6 +69,3 @@ class DataFitting:
         plt.xlabel('')
         plt.ylabel(f'{AXIS_LABELS[self.data_type]}')
         plt.show()
-                    
-# to do: residual analysis with day/night time residuals
-            
